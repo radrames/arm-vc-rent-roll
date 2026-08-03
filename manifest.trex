@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest manifest-version="0.1" xmlns="http://www.tableau.com/xml/extension_manifest">
+  <dashboard-extension id="com.aldar.arm-vc-rent-roll" extension-version="1.0.0">
+    <default-locale>en_US</default-locale>
+    <name resource-id="name">ARM Value Chain - Rent Roll</name>
+    <description resource-id="description">Lease-by-lease economics — MAT rent, RTM sales, and OCR vs target per lease, with drill-through to tenant portfolio detail.</description>
+    <author name="Aldar Digital" email="digital@aldar.com" organization="Aldar Properties" website="https://www.aldar.com" />
+    <min-api-version>1.10</min-api-version>
+    <source-location>
+      <url>http://localhost:8765/arm-vc-rent-roll/index.html</url>
+    </source-location>
+    <icon>iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAADUlEQVQ4jWNgYGD4DwABBAEAWjR/WRAAAAAASUVORK5CYII=</icon>
+    <permissions>
+      <permission>full data</permission>
+    </permissions>
+  </dashboard-extension>
+  <resources>
+    <resource id="name">
+      <text locale="en_US">ARM Value Chain - Rent Roll</text>
+    </resource>
+    <resource id="description">
+      <text locale="en_US">Lease-by-lease economics — MAT rent, RTM sales, and OCR vs target per lease, with drill-through to tenant portfolio detail.</text>
+    </resource>
+  </resources>
+</manifest>

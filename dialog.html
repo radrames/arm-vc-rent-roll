@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="js/tableau.extensions.1.latest.min.js"></script>
+  <link rel="stylesheet" href="dialog.css" />
+</head>
+<body>
+<div id="config-panel">
+
+  <div id="config-header">
+    <div>
+      <h2>Configure — Rent Roll</h2>
+      <p class="header-sub">Set up your extension options</p>
+    </div>
+    <button id="config-close" onclick="cancelConfig()">&#215;</button>
+  </div>
+
+  <div id="config-tabs">
+    <button class="ctab active" data-tab="data">Data</button>
+    <button class="ctab" data-tab="columns">Columns</button>
+  </div>
+
+  <div id="config-body">
+
+    <div class="tab-pane active" id="tab-data">
+
+      <div class="section-title">Worksheet</div>
+      <div class="field-group">
+        <label>Source Worksheet <span style="color:var(--danger)">*</span></label>
+        <select id="ws-source"><option value="">— select worksheet —</option></select>
+        <div class="field-hint">The worksheet that feeds this extension — one row per tenant code (lease)</div>
+      </div>
+
+      <div class="section-title">Lease Identity</div>
+      <div class="field-group">
+        <label>Tenant Name <span style="color:var(--danger)">*</span></label>
+        <select id="fld-tenant-name"><option value="">— select field —</option></select>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Tenant Code <span style="color:var(--danger)">*</span></label>
+          <select id="fld-tenant-code"><option value="">— select field —</option></select>
+        </div>
+        <div class="field-group">
+          <label>Tenant Category <span style="color:var(--danger)">*</span></label>
+          <select id="fld-tenant-category"><option value="">— select field —</option></select>
+          <div class="field-hint">Also powers the Category filter</div>
+        </div>
+      </div>
+
+      <div class="section-title">Location</div>
+      <div class="field-group">
+        <label>Property Name (Asset) <span style="color:var(--danger)">*</span></label>
+        <select id="fld-property-name"><option value="">— select field —</option></select>
+        <div class="field-hint">Also powers the Asset filter</div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Unit Code</label>
+          <select id="fld-unit-code"><option value="">— none —</option></select>
+        </div>
+        <div class="field-group">
+          <label>GLA %</label>
+          <select id="fld-gla-percent"><option value="">— none —</option></select>
+        </div>
+      </div>
+
+      <div class="section-title">Dates &amp; Area</div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Lease Start Date</label>
+          <select id="fld-lease-start"><option value="">— none —</option></select>
+        </div>
+        <div class="field-group">
+          <label>Lease End Date</label>
+          <select id="fld-lease-end"><option value="">— none —</option></select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Unit Area (sqm) <span style="color:var(--danger)">*</span></label>
+        <select id="fld-unit-area"><option value="">— select field —</option></select>
+      </div>
+
+      <div class="section-title">Financials</div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>MAT Rent (AED) <span style="color:var(--danger)">*</span></label>
+          <select id="fld-mat-rent"><option value="">— select field —</option></select>
+        </div>
+        <div class="field-group">
+          <label>Rent / Sqm (AED)</label>
+          <select id="fld-rent-per-sqm"><option value="">— none —</option></select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>RTM Sales (AED) <span style="color:var(--danger)">*</span></label>
+        <select id="fld-rtm-sales"><option value="">— select field —</option></select>
+      </div>
+      <div class="field-group">
+        <label>Sales — Prior Period (AED)</label>
+        <select id="fld-sales-prior-period"><option value="">— none —</option></select>
+        <div class="field-hint">If mapped, the tenant panel's YoY Growth tile is computed as (current − prior) ÷ prior, summed across the tenant's active leases, instead of averaging the YoY % field</div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>YoY % vs PY</label>
+          <select id="fld-yoy"><option value="">— none —</option></select>
+        </div>
+        <div class="field-group">
+          <label>OCR % (RTM)</label>
+          <select id="fld-ocr"><option value="">— none —</option></select>
+        </div>
+      </div>
+
+      <div class="section-title">Status &amp; Flags</div>
+      <div class="field-group">
+        <label>Sustainability Status</label>
+        <select id="fld-sustainability"><option value="">— none —</option></select>
+        <div class="field-hint">Expected values: Healthy, Watch, At Risk</div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Expiring Lease Flag</label>
+          <select id="fld-expiring-flag"><option value="">— none —</option></select>
+          <div class="field-hint">Drives the "Expiring ≤ 12mo" KPI and TERM badge</div>
+        </div>
+        <div class="field-group">
+          <label>Data Quality — Missing End Date Flag</label>
+          <select id="fld-data-quality-no-end-date"><option value="">— none —</option></select>
+          <div class="field-hint">Drives the "Data Quality" KPI and TERM badge</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Sales Index</label>
+        <select id="fld-sales-index"><option value="">— none —</option></select>
+      </div>
+      <div class="field-group">
+        <label>Tenant / Store Status</label>
+        <select id="fld-tenant-status"><option value="">— none —</option></select>
+        <div class="field-hint">Powers the Active/Inactive badge in the tenant side panel</div>
+      </div>
+
+    </div>
+
+    <div class="tab-pane" id="tab-columns">
+      <div class="section-title">Column Labels &amp; Visibility</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">
+        Rename any column header or hide it from the table. Hidden columns are still available for sorting via the underlying data — only the display is affected.
+      </p>
+
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Lease</span>
+          <label class="toggle"><input type="checkbox" id="vis-lease" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-lease" placeholder="LEASE" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Location</span>
+          <label class="toggle"><input type="checkbox" id="vis-location" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-location" placeholder="LOCATION" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Area Sqm</span>
+          <label class="toggle"><input type="checkbox" id="vis-area-sqm" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-area-sqm" placeholder="AREA SQM" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Term</span>
+          <label class="toggle"><input type="checkbox" id="vis-term" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-term" placeholder="TERM" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>MAT Rent</span>
+          <label class="toggle"><input type="checkbox" id="vis-mat-rent" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-mat-rent" placeholder="MAT RENT" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Rent / Sqm</span>
+          <label class="toggle"><input type="checkbox" id="vis-rent-per-sqm" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-rent-per-sqm" placeholder="RENT / SQM" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>RTM Sales</span>
+          <label class="toggle"><input type="checkbox" id="vis-rtm-sales" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-rtm-sales" placeholder="RTM SALES" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Vs PY</span>
+          <label class="toggle"><input type="checkbox" id="vis-vs-py" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-vs-py" placeholder="VS PY" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>OCR (RTM)</span>
+          <label class="toggle"><input type="checkbox" id="vis-ocr-rtm" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-ocr-rtm" placeholder="OCR (RTM)" />
+      </div>
+      <div class="field-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Sustainability</span>
+          <label class="toggle"><input type="checkbox" id="vis-sustainability" checked /><span class="toggle-slider"></span></label>
+        </label>
+        <input type="text" id="lbl-sustainability" placeholder="SUSTAINABILITY" />
+      </div>
+    </div>
+
+  </div>
+
+  <div id="config-footer">
+    <button class="form-btn secondary" onclick="cancelConfig()">Cancel</button>
+    <button class="form-btn" id="btn-save">Save &amp; Apply</button>
+  </div>
+
+</div>
+<script src="js/dialog.js"></script>
+</body>
+</html>
