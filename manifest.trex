@@ -7,7 +7,7 @@
     <author name="Aldar Digital" email="digital@aldar.com" organization="Aldar Properties" website="https://www.aldar.com" />
     <min-api-version>1.10</min-api-version>
     <source-location>
-      <url>http://localhost:8765/arm-vc-rent-roll/index.html</url>
+      <url>https://radrames.github.io/arm-vc-rent-roll/index.html</url>
     </source-location>
     <icon>iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAADUlEQVQ4jWNgYGD4DwABBAEAWjR/WRAAAAAASUVORK5CYII=</icon>
     <permissions>
