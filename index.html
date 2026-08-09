@@ -56,42 +56,91 @@
       background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
     }
     .kpi-card-item {
-      flex: 1; min-width: 140px; padding: 12px 18px; border-left: 1px solid var(--border);
+      position: relative; flex: 1; min-width: 140px; padding: 12px 18px; border-left: 1px solid var(--border);
     }
     .kpi-card-item:first-child { border-left: none; }
     .kpi-card-item.attention { background: rgba(198,40,40,.05); }
     .kpi-card-label {
       font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
-      color: var(--text-muted); margin-bottom: 5px;
+      color: var(--text-muted); margin-bottom: 5px; padding-right: 16px;
     }
     .kpi-card-item.attention .kpi-card-label { color: #B23A3A; }
     .kpi-card-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; }
     .kpi-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
+    /* ── KPI info tooltip ── */
+    .kpi-info-wrap { position: absolute; top: 12px; right: 12px; }
+    .kpi-info-btn {
+      width: 16px; height: 16px; border-radius: 50%; border: none; padding: 0;
+      background: rgba(212,120,47,.15); color: var(--accent);
+      font-size: 10px; font-weight: 700; font-style: italic; font-family: Georgia, 'Times New Roman', serif;
+      display: flex; align-items: center; justify-content: center; cursor: default;
+    }
+    .kpi-info-btn:hover, .kpi-info-btn:focus { background: rgba(212,120,47,.28); outline: none; }
+    .kpi-tooltip {
+      position: absolute; top: 22px; right: 0; width: 230px;
+      background: var(--text); color: #fff; font-size: 11px; line-height: 1.5;
+      padding: 9px 11px; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.18);
+      opacity: 0; visibility: hidden; transform: translateY(-4px);
+      transition: opacity .14s, transform .14s; z-index: 30; pointer-events: none;
+    }
+    .kpi-info-wrap:hover .kpi-tooltip, .kpi-info-btn:focus + .kpi-tooltip {
+      opacity: 1; visibility: visible; transform: translateY(0);
+    }
+
     /* ── Filter bar ── */
     #filter-bar {
-      display: flex; align-items: center; padding: 10px 20px; gap: 18px; flex-shrink: 0; flex-wrap: wrap;
+      display: flex; align-items: center; padding: 10px 20px; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
       background: var(--surface); border-bottom: 1px solid var(--border);
     }
-    .filter-group { display: flex; flex-direction: column; gap: 5px; }
-    .filter-group label {
-      font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted);
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; user-select: none; white-space: nowrap; font-family: var(--font);
+      transition: background .14s, border-color .14s, box-shadow .14s;
     }
-    .filter-group select {
-      font-family: var(--font); font-size: 13px; color: var(--text);
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 7px 30px 7px 10px; min-width: 170px; cursor: pointer; outline: none;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0 Z' fill='%236B6B6B'/></svg>");
-      background-repeat: no-repeat; background-position: right 10px center;
+    .filter-pill:hover { background: var(--surface2); border-color: #c5c0b9; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .filter-pill.active { background: rgba(212,120,47,.10); border-color: var(--accent); color: var(--text); }
+    .filter-pill.open { box-shadow: 0 1px 6px rgba(0,0,0,.12); }
+    .pill-chevron { font-size: 10px; color: var(--text-muted); }
+    .filter-pill.active .pill-chevron { color: var(--accent); }
+    .pill-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px;
+      background: var(--accent); color: #fff; border-radius: 9px;
+      font-size: 10px; font-weight: 700; line-height: 1;
     }
-    .filter-group select:focus { border-color: var(--accent); }
-    #btn-clear-filters {
-      font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-muted);
-      background: none; border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 7px 14px; cursor: pointer; transition: color .14s, border-color .14s; height: 33px;
+    .filter-clear-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 14px; background: transparent; border: 1px solid var(--border);
+      border-radius: 20px; font-size: 12px; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; white-space: nowrap; font-family: var(--font);
+      transition: color .14s, border-color .14s;
     }
-    #btn-clear-filters:hover { color: var(--danger); border-color: var(--danger); }
+    .filter-clear-btn:hover { color: var(--danger); border-color: var(--danger); }
+    .filter-dropdown {
+      position: fixed; z-index: 200; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.14);
+      min-width: 220px; max-width: 280px; max-height: 320px;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .filter-dropdown-body { overflow-y: auto; flex: 1; }
+    .filter-dropdown-body::-webkit-scrollbar { width: 4px; }
+    .filter-dropdown-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .filter-dropdown-item {
+      display: flex; align-items: center; gap: 9px; padding: 9px 14px;
+      font-size: 13px; color: var(--text); cursor: pointer; transition: background .1s;
+    }
+    .filter-dropdown-item:hover { background: var(--surface2); }
+    .filter-dropdown-item input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
+    .filter-dropdown-footer { display: flex; justify-content: space-between; padding: 8px 14px; border-top: 1px solid var(--border); }
+    .filter-dropdown-footer button {
+      background: none; border: none; font-size: 12px; font-family: var(--font);
+      color: var(--accent); cursor: pointer; padding: 2px 0; font-weight: 500;
+    }
+    .filter-dropdown-footer button:hover { text-decoration: underline; }
 
     /* ── Lease table ── */
     .lease-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -227,17 +276,7 @@
 
   <div id="kpi-cards"></div>
 
-  <div id="filter-bar" style="display:none;">
-    <div class="filter-group">
-      <label>Asset</label>
-      <select id="filter-asset"></select>
-    </div>
-    <div class="filter-group">
-      <label>Category</label>
-      <select id="filter-category"></select>
-    </div>
-    <button id="btn-clear-filters">Clear</button>
-  </div>
+  <div id="filter-bar" style="display:none;"></div>
 
   <div id="main">
     <table class="lease-table" id="lease-table">
@@ -284,14 +323,13 @@
   var MOCK_MODE     = window.location.search.indexOf('mock') >= 0;
 
   var sortState = { column: 'lease', order: 'asc' };
-  var activeFilters = { asset: '', category: '' };
+  var activeFilters = { asset: [], category: [] };
+  var currentDropdownEl = null;
 
   var $mockBanner    = document.getElementById('mock-banner');
   var $dataCapNotice = document.getElementById('data-cap-notice');
   var $kpiCards      = document.getElementById('kpi-cards');
   var $filterBar     = document.getElementById('filter-bar');
-  var $filterAsset   = document.getElementById('filter-asset');
-  var $filterCategory= document.getElementById('filter-category');
   var $main          = document.getElementById('main');
   var $tableHead     = document.getElementById('lease-table-head');
   var $tableBody     = document.getElementById('lease-table-body');
@@ -306,7 +344,21 @@
     fieldMappings: {},
     columnLabels: {},
     columnVisibility: {},
+    kpiTooltips: {},
   };
+
+  var KPI_TOOLTIP_DEFAULTS = {
+    annualRent: 'MAT = Moving Annual Turnover — the rolling 12-month total rent collected from this tenant.',
+    leasedGla: 'GLA = Gross Leasable Area — total leased floor area across the filtered leases, in square meters.',
+    rtmSales: 'RTM = Rolling Twelve Months — total tenant sales reported over the trailing 12-month period.',
+    blendedOcr: 'OCR = Occupancy Cost Ratio — total rent divided by total sales across the filtered leases.',
+    expiring: 'Count of distinct tenants with a lease ending within the next 12 months, based on the Expiring Lease Flag.',
+    dataQuality: 'Count of distinct tenants whose lease record is missing an end date, based on the Data Quality flag.',
+  };
+  function kpiTooltip(key) {
+    var t = cfg.kpiTooltips || {};
+    return (t[key] && t[key].trim()) || KPI_TOOLTIP_DEFAULTS[key];
+  }
 
   var COLUMNS = [
     { key: 'lease',          def: 'LEASE',          dataType: 'text' },
@@ -372,6 +424,7 @@
       if (all.fieldMappings)     cfg.fieldMappings     = JSON.parse(all.fieldMappings);
       if (all.columnLabels)      cfg.columnLabels      = JSON.parse(all.columnLabels);
       if (all.columnVisibility)  cfg.columnVisibility  = JSON.parse(all.columnVisibility);
+      if (all.kpiTooltips)       cfg.kpiTooltips       = JSON.parse(all.kpiTooltips);
     } catch (e) {}
   }
 
@@ -404,7 +457,7 @@
   function afterDataLoaded() {
     checkDataCap();
     sortState = { column: 'lease', order: 'asc' };
-    populateFilterOptions();
+    renderFilterBar();
     applyAndRender();
   }
 
@@ -532,19 +585,24 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // ── Filters ──────────────────────────────────────────────────────────────
-  function populateFilterOptions() {
+  // ── Filters (multi-select pills) ───────────────────────────────────────────
+  function renderFilterBar() {
     if (!fld().propertyNameField || !fld().tenantCategoryField) { $filterBar.style.display = 'none'; return; }
+    closeDropdown();
     $filterBar.style.display = 'flex';
+    $filterBar.innerHTML = '';
+    $filterBar.appendChild(buildFilterPill('asset', 'Asset', 'propertyNameField'));
+    $filterBar.appendChild(buildFilterPill('category', 'Category', 'tenantCategoryField'));
 
-    var assets = uniqueSorted(rawRows, 'propertyNameField');
-    var cats   = uniqueSorted(rawRows, 'tenantCategoryField');
-
-    fillSelect($filterAsset, assets, 'All assets');
-    fillSelect($filterCategory, cats, 'All categories');
-
-    $filterAsset.value = activeFilters.asset || '';
-    $filterCategory.value = activeFilters.category || '';
+    var clearBtn = document.createElement('button');
+    clearBtn.className = 'filter-clear-btn';
+    clearBtn.innerHTML = '&#215; Clear all';
+    clearBtn.addEventListener('click', function () {
+      activeFilters = { asset: [], category: [] };
+      renderFilterBar();
+      applyAndRender();
+    });
+    $filterBar.appendChild(clearBtn);
   }
 
   function uniqueSorted(rows, fieldKey) {
@@ -556,32 +614,110 @@
     return out.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
   }
 
-  function fillSelect($sel, values, allLabel) {
-    var prev = $sel.value;
-    $sel.innerHTML = '';
-    var allOpt = document.createElement('option'); allOpt.value = ''; allOpt.textContent = allLabel;
-    $sel.appendChild(allOpt);
-    values.forEach(function (v) {
-      var o = document.createElement('option'); o.value = v; o.textContent = v; $sel.appendChild(o);
+  function buildFilterPill(filterKey, label, fieldKey) {
+    var pill = document.createElement('button');
+    pill.type = 'button';
+
+    function getSelected() { return activeFilters[filterKey] || []; }
+    function isActive() { return getSelected().length > 0; }
+
+    function refreshPill() {
+      var sel = getSelected();
+      while (pill.firstChild) pill.removeChild(pill.firstChild);
+      var text = label + ': ' + (sel.length === 0 ? 'All' : (sel.length === 1 ? sel[0] : sel.length + ' selected'));
+      var span = document.createElement('span'); span.textContent = text;
+      pill.appendChild(span);
+      if (sel.length > 0) {
+        var badge = document.createElement('span'); badge.className = 'pill-count'; badge.textContent = String(sel.length);
+        pill.appendChild(badge);
+      }
+      var chev = document.createElement('span'); chev.className = 'pill-chevron'; chev.textContent = '▾';
+      pill.appendChild(chev);
+      pill.className = 'filter-pill' + (isActive() ? ' active' : '');
+    }
+
+    refreshPill();
+
+    pill.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (currentDropdownEl && pill.classList.contains('open')) { closeDropdown(); return; }
+      closeDropdown();
+      pill.classList.add('open');
+
+      var values = uniqueSorted(rawRows, fieldKey);
+      var dropdown = document.createElement('div'); dropdown.className = 'filter-dropdown';
+      var body = document.createElement('div'); body.className = 'filter-dropdown-body';
+      dropdown.appendChild(body);
+
+      if (!values.length) {
+        var empty = document.createElement('div'); empty.className = 'filter-dropdown-item';
+        empty.style.color = 'var(--text-muted)'; empty.textContent = 'No values found'; body.appendChild(empty);
+      } else {
+        values.forEach(function (v) {
+          var item = document.createElement('div'); item.className = 'filter-dropdown-item';
+          var input = document.createElement('input'); input.type = 'checkbox';
+          input.checked = getSelected().indexOf(v) >= 0;
+          var labelEl = document.createElement('span'); labelEl.textContent = v;
+          input.addEventListener('change', function () {
+            var cur = activeFilters[filterKey] || [];
+            activeFilters[filterKey] = input.checked ? cur.concat([v]) : cur.filter(function (x) { return x !== v; });
+            refreshPill();
+            applyAndRender();
+          });
+          item.appendChild(input); item.appendChild(labelEl);
+          item.addEventListener('click', function (ev) { if (ev.target !== input) input.click(); });
+          body.appendChild(item);
+        });
+      }
+
+      var footer = document.createElement('div'); footer.className = 'filter-dropdown-footer';
+      var selAll = document.createElement('button'); selAll.type = 'button'; selAll.textContent = 'Select all';
+      selAll.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        activeFilters[filterKey] = values.slice();
+        refreshPill(); applyAndRender(); closeDropdown();
+      });
+      var clear = document.createElement('button'); clear.type = 'button'; clear.textContent = 'Clear';
+      clear.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        activeFilters[filterKey] = [];
+        refreshPill(); applyAndRender(); closeDropdown();
+      });
+      footer.appendChild(selAll); footer.appendChild(clear);
+      dropdown.appendChild(footer);
+
+      positionDropdown(dropdown, pill);
+      document.body.appendChild(dropdown);
+      currentDropdownEl = dropdown;
+      setTimeout(function () { document.addEventListener('click', outsideClickHandler); }, 0);
     });
-    if (prev && values.indexOf(prev) >= 0) $sel.value = prev;
+
+    return pill;
+  }
+
+  function positionDropdown(dropdown, pill) {
+    var rect = pill.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 6) + 'px';
+    dropdown.style.left = rect.left + 'px';
+  }
+
+  function closeDropdown() {
+    if (currentDropdownEl) { currentDropdownEl.remove(); currentDropdownEl = null; }
+    document.removeEventListener('click', outsideClickHandler);
+    $filterBar.querySelectorAll('.filter-pill.open').forEach(function (p) { p.classList.remove('open'); });
+  }
+
+  function outsideClickHandler(e) {
+    if (currentDropdownEl && !currentDropdownEl.contains(e.target)) closeDropdown();
   }
 
   function applyFilters(rows) {
     return rows.filter(function (row) {
-      if (activeFilters.asset && val(row, 'propertyNameField') !== activeFilters.asset) return false;
-      if (activeFilters.category && val(row, 'tenantCategoryField') !== activeFilters.category) return false;
+      if (activeFilters.asset.length && activeFilters.asset.indexOf(val(row, 'propertyNameField')) === -1) return false;
+      if (activeFilters.category.length && activeFilters.category.indexOf(val(row, 'tenantCategoryField')) === -1) return false;
       return true;
     });
   }
-
-  $filterAsset.addEventListener('change', function () { activeFilters.asset = $filterAsset.value; applyAndRender(); });
-  $filterCategory.addEventListener('change', function () { activeFilters.category = $filterCategory.value; applyAndRender(); });
-  document.getElementById('btn-clear-filters').addEventListener('click', function () {
-    activeFilters = { asset: '', category: '' };
-    $filterAsset.value = ''; $filterCategory.value = '';
-    applyAndRender();
-  });
 
   function applyAndRender() {
     var filtered = applyFilters(rawRows);
@@ -619,8 +755,12 @@
     };
   }
 
-  function kpiCardHtml(label, value, sub, attention) {
+  function kpiCardHtml(label, value, sub, tooltipKey, attention) {
     return '<div class="kpi-card-item' + (attention ? ' attention' : '') + '">' +
+      '<div class="kpi-info-wrap">' +
+      '<button class="kpi-info-btn" type="button" tabindex="0" aria-label="About ' + esc(label) + '">i</button>' +
+      '<div class="kpi-tooltip" role="tooltip">' + esc(kpiTooltip(tooltipKey)) + '</div>' +
+      '</div>' +
       '<div class="kpi-card-label">' + esc(label) + '</div>' +
       '<div class="kpi-card-value">' + value + '</div>' +
       (sub ? '<div class="kpi-card-sub">' + sub + '</div>' : '') +
@@ -629,14 +769,14 @@
 
   function renderKpiCards(k) {
     var html = '';
-    html += kpiCardHtml('Annual Rent (MAT)', formatValue(k.annualRent), null);
+    html += kpiCardHtml('Annual Rent (MAT)', formatValue(k.annualRent), null, 'annualRent');
     html += kpiCardHtml('Leased GLA', formatNumber(k.leasedGla) + ' sqm',
-      isNaN(k.rentPerSqm) ? null : 'avg AED ' + Math.round(k.rentPerSqm).toLocaleString('en-US') + '/sqm');
+      isNaN(k.rentPerSqm) ? null : 'avg AED ' + Math.round(k.rentPerSqm).toLocaleString('en-US') + '/sqm', 'leasedGla');
     html += kpiCardHtml('RTM Sales', formatValue(k.rtmSales),
-      isNaN(k.salesPerSqm) ? null : 'avg AED ' + Math.round(k.salesPerSqm).toLocaleString('en-US') + '/sqm');
-    html += kpiCardHtml('Blended OCR', isNaN(k.blendedOcr) ? '—' : k.blendedOcr.toFixed(1) + '%', 'rent ÷ sales · RTM');
-    html += kpiCardHtml('Expiring ≤ 12mo', String(k.expiringCount), 'renewal exposure');
-    html += kpiCardHtml('Data Quality', String(k.dataQualityCount), 'leases missing end date', true);
+      isNaN(k.salesPerSqm) ? null : 'avg AED ' + Math.round(k.salesPerSqm).toLocaleString('en-US') + '/sqm', 'rtmSales');
+    html += kpiCardHtml('Blended OCR', isNaN(k.blendedOcr) ? '—' : k.blendedOcr.toFixed(1) + '%', 'rent ÷ sales · RTM', 'blendedOcr');
+    html += kpiCardHtml('Expiring ≤ 12mo', String(k.expiringCount), 'renewal exposure', 'expiring');
+    html += kpiCardHtml('Data Quality', String(k.dataQualityCount), 'leases missing end date', 'dataQuality', true);
     $kpiCards.innerHTML = html;
   }
 

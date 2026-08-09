@@ -23,6 +23,7 @@
   <div id="config-tabs">
     <button class="ctab active" data-tab="data">Data</button>
     <button class="ctab" data-tab="columns">Columns</button>
+    <button class="ctab" data-tab="kpi-info">KPI Info</button>
   </div>
 
   <div id="config-body">
@@ -222,6 +223,38 @@
           <label class="toggle"><input type="checkbox" id="vis-sustainability" checked /><span class="toggle-slider"></span></label>
         </label>
         <input type="text" id="lbl-sustainability" placeholder="SUSTAINABILITY" />
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-kpi-info">
+      <div class="section-title">KPI Card Tooltips</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">
+        Shown when a user hovers the "i" icon on each KPI card. Leave blank to use the default text.
+      </p>
+
+      <div class="field-group">
+        <label>Annual Rent (MAT)</label>
+        <textarea id="tip-annual-rent" rows="3" placeholder="MAT = Moving Annual Turnover — the rolling 12-month total rent collected from this tenant."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Leased GLA</label>
+        <textarea id="tip-leased-gla" rows="3" placeholder="GLA = Gross Leasable Area — total leased floor area across the filtered leases, in square meters."></textarea>
+      </div>
+      <div class="field-group">
+        <label>RTM Sales</label>
+        <textarea id="tip-rtm-sales" rows="3" placeholder="RTM = Rolling Twelve Months — total tenant sales reported over the trailing 12-month period."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Blended OCR</label>
+        <textarea id="tip-blended-ocr" rows="3" placeholder="OCR = Occupancy Cost Ratio — total rent divided by total sales across the filtered leases."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Expiring ≤ 12mo</label>
+        <textarea id="tip-expiring" rows="3" placeholder="Count of distinct tenants with a lease ending within the next 12 months, based on the Expiring Lease Flag."></textarea>
+      </div>
+      <div class="field-group">
+        <label>Data Quality</label>
+        <textarea id="tip-data-quality" rows="3" placeholder="Count of distinct tenants whose lease record is missing an end date, based on the Data Quality flag."></textarea>
       </div>
     </div>
 

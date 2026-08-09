@@ -46,6 +46,15 @@
     { id: 'lbl-sustainability',  key: 'sustainabilityLabel', def: 'SUSTAINABILITY', visId: 'vis-sustainability',  visKey: 'sustainabilityVisible' },
   ];
 
+  var KPI_TOOLTIP_KEYS = [
+    { id: 'tip-annual-rent',  key: 'annualRent' },
+    { id: 'tip-leased-gla',   key: 'leasedGla' },
+    { id: 'tip-rtm-sales',    key: 'rtmSales' },
+    { id: 'tip-blended-ocr',  key: 'blendedOcr' },
+    { id: 'tip-expiring',     key: 'expiring' },
+    { id: 'tip-data-quality', key: 'dataQuality' },
+  ];
+
   window.addEventListener('load', function () {
     tableau.extensions.initializeDialogAsync().then(function () {
       dashWs = tableau.extensions.dashboardContent.dashboard.worksheets;
@@ -136,6 +145,9 @@
       setVal(item.id, cl[item.key] || item.def);
       setCheck(item.visId, cv[item.visKey] !== false);
     });
+
+    var kt = s.kpiTooltips || {};
+    KPI_TOOLTIP_KEYS.forEach(function (item) { setVal(item.id, kt[item.key] || ''); });
   }
 
   function saveAndClose() {
@@ -161,6 +173,10 @@
     });
     tableau.extensions.settings.set('columnLabels', JSON.stringify(cl));
     tableau.extensions.settings.set('columnVisibility', JSON.stringify(cv));
+
+    var kt = {};
+    KPI_TOOLTIP_KEYS.forEach(function (item) { kt[item.key] = getVal(item.id).trim(); });
+    tableau.extensions.settings.set('kpiTooltips', JSON.stringify(kt));
 
     tableau.extensions.settings.saveAsync()
       .then(function ()  { tableau.extensions.ui.closeDialog('saved'); })

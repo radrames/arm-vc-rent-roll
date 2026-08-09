@@ -103,7 +103,8 @@ html, body {
 .field-hint { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 .field-group input[type="text"],
 .field-group input[type="number"],
-.field-group select {
+.field-group select,
+.field-group textarea {
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -115,8 +116,10 @@ html, body {
   outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
+.field-group textarea { resize: vertical; line-height: 1.4; }
 .field-group input:focus,
-.field-group select:focus {
+.field-group select:focus,
+.field-group textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(212,120,47,.12);
 }
