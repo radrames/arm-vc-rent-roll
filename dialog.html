@@ -24,11 +24,24 @@
     <button class="ctab active" data-tab="data">Data</button>
     <button class="ctab" data-tab="columns">Columns</button>
     <button class="ctab" data-tab="kpi-info">KPI Info</button>
+    <button class="ctab" data-tab="filters">Filters</button>
   </div>
 
   <div id="config-body">
 
     <div class="tab-pane active" id="tab-data">
+
+      <div class="section-title">Preview Mode</div>
+      <div class="mock-mode-row" id="mock-mode-row">
+        <div>
+          <div class="toggle-label">Mock Data Mode</div>
+          <div class="toggle-desc">Use built-in sample data instead of a live worksheet — for testing before a real data source is connected. Disable to use live data.</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-mock-mode" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
 
       <div class="section-title">Worksheet</div>
       <div class="field-group">
@@ -256,6 +269,20 @@
         <label>Data Quality</label>
         <textarea id="tip-data-quality" rows="3" placeholder="Count of distinct tenants whose lease record is missing an end date, based on the Data Quality flag."></textarea>
       </div>
+    </div>
+
+    <div class="tab-pane" id="tab-filters">
+      <div class="section-title">Filter Pills</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;">
+        Each row becomes a filter pill in the main view. Select a source worksheet on the Data tab first, then add filters here. Enable <strong>Searchable</strong> to show a type-ahead search box inside the dropdown — useful for long value lists.
+      </p>
+
+      <div class="filter-list-header">
+        <span>Column</span><span>Label</span><span>Searchable</span><span></span>
+      </div>
+      <div id="filter-list"></div>
+
+      <button id="btn-add-filter" class="form-btn secondary" style="margin-top:10px;">+ Add Filter</button>
     </div>
 
   </div>

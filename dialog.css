@@ -209,10 +209,19 @@ html, body {
 .discover-btn:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Filter manager ────────────────────────────────────────────────────────── */
-.filter-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.filter-list-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto 28px;
+  gap: 6px;
+  padding: 0 8px 4px;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text-muted);
+  margin-bottom: 2px;
+}
+#filter-list { display: flex; flex-direction: column; gap: 5px; }
 .filter-item {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px 28px;
+  grid-template-columns: 1fr 1fr auto 28px;
   align-items: center;
   gap: 6px;
   background: var(--surface);
@@ -232,6 +241,11 @@ html, body {
   color: var(--text); background: var(--surface2); outline: none;
 }
 .filter-item select:focus { border-color: var(--accent); }
+.fi-searchable-wrap {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--text-muted); white-space: nowrap; cursor: pointer;
+}
+.fi-searchable-wrap input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
 .form-btn {
@@ -255,6 +269,16 @@ html, body {
   display: flex; gap: 8px; justify-content: flex-end;
   background: var(--surface);
   flex-shrink: 0;
+}
+
+/* ── Mock mode row ─────────────────────────────────────────────────────────── */
+.mock-mode-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; margin-bottom: 4px;
+  background: #FFFDE7; border: 1px solid #FFE082; border-radius: var(--radius);
+}
+.mock-mode-row.active {
+  background: rgba(212,120,47,.08); border-color: var(--accent);
 }
 
 /* ── Extension-specific overrides — add below this line ────────────────────── */

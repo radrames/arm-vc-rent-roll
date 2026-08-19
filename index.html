@@ -260,6 +260,15 @@
     }
     .store-status-badge.active   { background: #E8F5E9; color: #2E7D32; }
     .store-status-badge.inactive { background: var(--surface2); color: var(--text-muted); }
+
+    /* ── Filter dropdown search ── */
+    .filter-search-wrap { padding: 8px 8px 4px; }
+    .filter-search-input {
+      width: 100%; padding: 5px 8px; font-size: 12px; font-family: var(--font);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      outline: none; color: var(--text); background: var(--surface);
+    }
+    .filter-search-input:focus { border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -323,7 +332,7 @@
   var MOCK_MODE     = window.location.search.indexOf('mock') >= 0;
 
   var sortState = { column: 'lease', order: 'asc' };
-  var activeFilters = { asset: [], category: [] };
+  var activeFilters = {};
   var currentDropdownEl = null;
 
   var $mockBanner    = document.getElementById('mock-banner');
@@ -345,6 +354,8 @@
     columnLabels: {},
     columnVisibility: {},
     kpiTooltips: {},
+    filterConfigs: null,
+    mockMode: false,
   };
 
   var KPI_TOOLTIP_DEFAULTS = {
@@ -386,7 +397,7 @@
   function initTableau() {
     if (MOCK_MODE) {
       $mockBanner.style.display = 'block';
-      $mockBanner.textContent = 'Mock data preview — showing sample leases (?mock in URL). Connect Tableau for live data.';
+      $mockBanner.textContent = 'URL mock mode — showing sample data (?mock param). Remove it to connect Tableau.';
       cfg.fieldMappings = mockFieldMappings();
       rawRows = mockRows();
       afterDataLoaded();
@@ -396,24 +407,40 @@
     tableau.extensions.initializeAsync({ configure: openConfig }).then(function () {
       tableauReady = true;
 
-      var mode = tableau.extensions.environment.mode;
-      if (!mode || mode === 'authoring') {
-        $gearBtn.hidden = false;
-        $gearBtn.addEventListener('click', openConfig);
-      }
-
+      $gearBtn.addEventListener('click', openConfig);
       document.getElementById('empty-config-btn').addEventListener('click', openConfig);
 
       tableau.extensions.settings.addEventListener(
         tableau.TableauEventType.SettingsChanged,
-        function () { loadSavedConfig(); fetchAndRender(); }
+        function () { loadSavedConfig(); updateGearVisibility(); fetchAndRender(); }
       );
 
       loadSavedConfig();
+      updateGearVisibility();
       fetchAndRender();
     }).catch(function (err) {
-      console.warn('Tableau not available:', err);
-      showEmpty();
+      console.warn('Tableau not available, falling back to browser preview mode:', err);
+
+      // Read any settings previously saved via the browser-mode config dialog
+      try {
+        var stored = JSON.parse(localStorage.getItem('arm_vc_rr_settings') || '{}');
+        if (stored.columnLabels)     cfg.columnLabels     = JSON.parse(stored.columnLabels);
+        if (stored.columnVisibility) cfg.columnVisibility = JSON.parse(stored.columnVisibility);
+        if (stored.kpiTooltips)      cfg.kpiTooltips      = JSON.parse(stored.kpiTooltips);
+        if (stored.filterConfigs)    cfg.filterConfigs    = JSON.parse(stored.filterConfigs);
+      } catch (e) {}
+
+      cfg.fieldMappings = mockFieldMappings();
+      rawRows = mockRows();
+
+      var configHref = window.location.href.replace(/\/[^\/]*$/, '/dialog.html').replace(/\?.*$/, '');
+      $mockBanner.style.display = 'block';
+      $mockBanner.innerHTML =
+        'Browser preview mode — showing sample data. ' +
+        '<a href="' + configHref + '" style="color:inherit;font-weight:700;text-decoration:underline;">Open Configuration</a>' +
+        ' to set up filters and column options.';
+
+      afterDataLoaded();
     });
   }
 
@@ -425,7 +452,14 @@
       if (all.columnLabels)      cfg.columnLabels      = JSON.parse(all.columnLabels);
       if (all.columnVisibility)  cfg.columnVisibility  = JSON.parse(all.columnVisibility);
       if (all.kpiTooltips)       cfg.kpiTooltips       = JSON.parse(all.kpiTooltips);
+      if (all.filterConfigs)     cfg.filterConfigs     = JSON.parse(all.filterConfigs);
+      cfg.mockMode = all.mockMode === 'true';
     } catch (e) {}
+  }
+
+  function updateGearVisibility() {
+    var mode = tableau.extensions.environment ? tableau.extensions.environment.mode : null;
+    $gearBtn.hidden = !(cfg.mockMode || !mode || mode === 'authoring');
   }
 
   function openConfig() {
@@ -433,7 +467,7 @@
     var url = window.location.href.replace(/\/[^\/]*$/, '/dialog.html').replace(/\?.*$/, '');
     tableau.extensions.ui.displayDialogAsync(url, '', { height: 680, width: 600 })
       .then(function (result) {
-        if (result === 'saved') { loadSavedConfig(); fetchAndRender(); }
+        if (result === 'saved') { loadSavedConfig(); updateGearVisibility(); fetchAndRender(); }
       })
       .catch(function (err) {
         if (err.errorCode !== tableau.ErrorCodes.DialogClosedByUser) {
@@ -443,6 +477,15 @@
   }
 
   function fetchAndRender() {
+    if (cfg.mockMode) {
+      cfg.fieldMappings = mockFieldMappings();
+      rawRows = mockRows();
+      $mockBanner.style.display = 'block';
+      $mockBanner.textContent = 'Mock mode is on — showing sample data. Disable in the configuration to use live data.';
+      afterDataLoaded();
+      return;
+    }
+    $mockBanner.style.display = 'none';
     if (!cfg.sourceWorksheet) { showEmpty(); return; }
     var ws = tableau.extensions.dashboardContent.dashboard.worksheets.find(function (w) {
       return w.name === cfg.sourceWorksheet;
@@ -587,22 +630,63 @@
 
   // ── Filters (multi-select pills) ───────────────────────────────────────────
   function renderFilterBar() {
-    if (!fld().propertyNameField || !fld().tenantCategoryField) { $filterBar.style.display = 'none'; return; }
+    var filters = cfg.filterConfigs;
+
+    // Backward compat: no filterConfigs saved yet — use hardcoded Asset + Category
+    if (!filters) {
+      if (!fld().propertyNameField || !fld().tenantCategoryField) { $filterBar.style.display = 'none'; return; }
+      closeDropdown();
+      $filterBar.style.display = 'flex';
+      $filterBar.innerHTML = '';
+      $filterBar.appendChild(buildFilterPill('propertyNameField', 'Asset', false, true));
+      $filterBar.appendChild(buildFilterPill('tenantCategoryField', 'Category', false, true));
+      var clearBtnLegacy = document.createElement('button');
+      clearBtnLegacy.className = 'filter-clear-btn';
+      clearBtnLegacy.innerHTML = '&#215; Clear all';
+      clearBtnLegacy.addEventListener('click', function () {
+        activeFilters = {};
+        renderFilterBar();
+        applyAndRender();
+      });
+      $filterBar.appendChild(clearBtnLegacy);
+      return;
+    }
+
+    if (!filters.length) { $filterBar.style.display = 'none'; return; }
+
     closeDropdown();
     $filterBar.style.display = 'flex';
     $filterBar.innerHTML = '';
-    $filterBar.appendChild(buildFilterPill('asset', 'Asset', 'propertyNameField'));
-    $filterBar.appendChild(buildFilterPill('category', 'Category', 'tenantCategoryField'));
+
+    // Prune stale activeFilters keys not in current config
+    var currentFields = filters.map(function (f) { return f.field; });
+    Object.keys(activeFilters).forEach(function (k) {
+      if (currentFields.indexOf(k) === -1) delete activeFilters[k];
+    });
+
+    filters.forEach(function (fc) {
+      if (!fc.field) return;
+      $filterBar.appendChild(buildFilterPill(fc.field, fc.label || fc.field, fc.searchable, false));
+    });
 
     var clearBtn = document.createElement('button');
     clearBtn.className = 'filter-clear-btn';
     clearBtn.innerHTML = '&#215; Clear all';
     clearBtn.addEventListener('click', function () {
-      activeFilters = { asset: [], category: [] };
+      activeFilters = {};
       renderFilterBar();
       applyAndRender();
     });
     $filterBar.appendChild(clearBtn);
+  }
+
+  function uniqueSortedByCol(rows, colName) {
+    var seen = {}, out = [];
+    rows.forEach(function (row) {
+      var v = String(row[colName] === undefined || row[colName] === null ? '' : row[colName]).trim();
+      if (v && !seen[v]) { seen[v] = true; out.push(v); }
+    });
+    return out.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
   }
 
   function uniqueSorted(rows, fieldKey) {
@@ -614,11 +698,13 @@
     return out.sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }); });
   }
 
-  function buildFilterPill(filterKey, label, fieldKey) {
+  // fieldName: actual column name (direct) when useLegacyFieldKey=false,
+  //            logical field key (via val()) when useLegacyFieldKey=true
+  function buildFilterPill(fieldName, label, searchable, useLegacyFieldKey) {
     var pill = document.createElement('button');
     pill.type = 'button';
 
-    function getSelected() { return activeFilters[filterKey] || []; }
+    function getSelected() { return activeFilters[fieldName] || []; }
     function isActive() { return getSelected().length > 0; }
 
     function refreshPill() {
@@ -644,8 +730,31 @@
       closeDropdown();
       pill.classList.add('open');
 
-      var values = uniqueSorted(rawRows, fieldKey);
+      var values = useLegacyFieldKey
+        ? uniqueSorted(rawRows, fieldName)
+        : uniqueSortedByCol(rawRows, fieldName);
+
       var dropdown = document.createElement('div'); dropdown.className = 'filter-dropdown';
+
+      // Search box (only when searchable)
+      if (searchable) {
+        var searchWrap = document.createElement('div'); searchWrap.className = 'filter-search-wrap';
+        var searchInput = document.createElement('input');
+        searchInput.type = 'text'; searchInput.placeholder = 'Search…'; searchInput.className = 'filter-search-input';
+        searchInput.addEventListener('input', function () {
+          var q = searchInput.value.toLowerCase();
+          body.querySelectorAll('.filter-dropdown-item').forEach(function (item) {
+            var sp = item.querySelector('span');
+            var text = sp ? sp.textContent.toLowerCase() : '';
+            item.style.display = (q === '' || text.indexOf(q) >= 0) ? '' : 'none';
+          });
+        });
+        searchInput.addEventListener('click', function (ev) { ev.stopPropagation(); });
+        searchWrap.appendChild(searchInput);
+        dropdown.appendChild(searchWrap);
+        setTimeout(function () { searchInput.focus(); }, 50);
+      }
+
       var body = document.createElement('div'); body.className = 'filter-dropdown-body';
       dropdown.appendChild(body);
 
@@ -659,8 +768,8 @@
           input.checked = getSelected().indexOf(v) >= 0;
           var labelEl = document.createElement('span'); labelEl.textContent = v;
           input.addEventListener('change', function () {
-            var cur = activeFilters[filterKey] || [];
-            activeFilters[filterKey] = input.checked ? cur.concat([v]) : cur.filter(function (x) { return x !== v; });
+            var cur = activeFilters[fieldName] || [];
+            activeFilters[fieldName] = input.checked ? cur.concat([v]) : cur.filter(function (x) { return x !== v; });
             refreshPill();
             applyAndRender();
           });
@@ -674,13 +783,13 @@
       var selAll = document.createElement('button'); selAll.type = 'button'; selAll.textContent = 'Select all';
       selAll.addEventListener('click', function (ev) {
         ev.stopPropagation();
-        activeFilters[filterKey] = values.slice();
+        activeFilters[fieldName] = values.slice();
         refreshPill(); applyAndRender(); closeDropdown();
       });
       var clear = document.createElement('button'); clear.type = 'button'; clear.textContent = 'Clear';
       clear.addEventListener('click', function (ev) {
         ev.stopPropagation();
-        activeFilters[filterKey] = [];
+        activeFilters[fieldName] = [];
         refreshPill(); applyAndRender(); closeDropdown();
       });
       footer.appendChild(selAll); footer.appendChild(clear);
@@ -712,10 +821,26 @@
   }
 
   function applyFilters(rows) {
+    var filters = cfg.filterConfigs;
+
+    // Backward compat: no filterConfigs key saved yet
+    if (!filters) {
+      return rows.filter(function (row) {
+        var af = activeFilters;
+        if (af.propertyNameField && af.propertyNameField.length && af.propertyNameField.indexOf(val(row, 'propertyNameField')) === -1) return false;
+        if (af.tenantCategoryField && af.tenantCategoryField.length && af.tenantCategoryField.indexOf(val(row, 'tenantCategoryField')) === -1) return false;
+        return true;
+      });
+    }
+
     return rows.filter(function (row) {
-      if (activeFilters.asset.length && activeFilters.asset.indexOf(val(row, 'propertyNameField')) === -1) return false;
-      if (activeFilters.category.length && activeFilters.category.indexOf(val(row, 'tenantCategoryField')) === -1) return false;
-      return true;
+      return filters.every(function (fc) {
+        if (!fc.field) return true;
+        var sel = activeFilters[fc.field];
+        if (!sel || !sel.length) return true;
+        var rowVal = String(row[fc.field] === undefined || row[fc.field] === null ? '' : row[fc.field]).trim();
+        return sel.indexOf(rowVal) >= 0;
+      });
     });
   }
 

@@ -2,8 +2,90 @@
 
 (function () {
 
-  var dashWs     = [];
-  var sourceCols = [];
+  var dashWs        = [];
+  var sourceCols    = [];
+  var filterConfigs = []; // [{ field, label, searchable }]
+
+  var BROWSER_STORE_KEY = 'arm_vc_rr_settings';
+
+  // Column names that match mockFieldMappings() in index.html
+  var MOCK_COLS = [
+    'Tenant Name', 'Tenant Code', 'Tenant Category', 'Property Name', 'Unit Code', 'GLA %',
+    'Lease Start', 'Lease End', 'Unit Area', 'MAT Rent', 'Rent Per Sqm', 'RTM Sales',
+    'Prior Sales', 'YoY %', 'OCR %', 'Sustainability', 'Expiring Flag', 'DQ No End Date',
+    'Sales Index', 'Tenant Status',
+  ];
+
+  function injectBrowserStub() {
+    var pending = {};
+
+    window.tableau = {
+      extensions: {
+        initializeDialogAsync: function () { return Promise.resolve(); },
+        dashboardContent: {
+          dashboard: {
+            worksheets: [{
+              name: 'Mock Worksheet',
+              getSummaryDataAsync: function () {
+                return Promise.resolve({
+                  columns: MOCK_COLS.map(function (n) { return { fieldName: n }; }),
+                  data: [],
+                });
+              },
+            }],
+          },
+        },
+        settings: {
+          getAll: function () {
+            try { return JSON.parse(localStorage.getItem(BROWSER_STORE_KEY) || '{}'); } catch (e) { return {}; }
+          },
+          set: function (key, val) { pending[key] = val; },
+          saveAsync: function () {
+            try {
+              var stored;
+              try { stored = JSON.parse(localStorage.getItem(BROWSER_STORE_KEY) || '{}'); } catch (e2) { stored = {}; }
+              var keys = Object.keys(pending);
+              for (var i = 0; i < keys.length; i++) { stored[keys[i]] = pending[keys[i]]; }
+              localStorage.setItem(BROWSER_STORE_KEY, JSON.stringify(stored));
+              pending = {};
+            } catch (e) {}
+            return Promise.resolve();
+          },
+        },
+        ui: {
+          closeDialog: function () {
+            var base = window.location.href.replace(/\/[^\/]*$/, '/index.html').replace(/\?.*$/, '');
+            window.location.href = base;
+          },
+        },
+      },
+    };
+
+    // Pre-seed mock field mappings so required-field validation passes on first open
+    try {
+      var existing = JSON.parse(localStorage.getItem(BROWSER_STORE_KEY) || '{}');
+      if (!existing.sourceWorksheet) {
+        existing.sourceWorksheet = 'Mock Worksheet';
+        existing.fieldMappings = JSON.stringify({
+          tenantNameField: 'Tenant Name', tenantCodeField: 'Tenant Code', tenantCategoryField: 'Tenant Category',
+          propertyNameField: 'Property Name', unitCodeField: 'Unit Code', glaPercentField: 'GLA %',
+          leaseStartField: 'Lease Start', leaseEndField: 'Lease End', unitAreaField: 'Unit Area',
+          matRentField: 'MAT Rent', rentPerSqmField: 'Rent Per Sqm', rtmSalesField: 'RTM Sales',
+          priorPeriodSalesField: 'Prior Sales', yoyField: 'YoY %', ocrField: 'OCR %',
+          sustainabilityField: 'Sustainability', expiringFlagField: 'Expiring Flag',
+          dataQualityNoEndDateField: 'DQ No End Date', salesIndexField: 'Sales Index',
+          tenantStatusField: 'Tenant Status',
+        });
+        localStorage.setItem(BROWSER_STORE_KEY, JSON.stringify(existing));
+      }
+    } catch (e) {}
+
+    var bar = document.createElement('div');
+    bar.style.cssText = 'padding:5px 20px;background:#E8F5E9;border-bottom:1px solid #A5D6A7;font-size:11px;font-weight:500;color:#2E7D32;flex-shrink:0;';
+    bar.textContent = 'Browser preview — settings saved locally. "Save & Apply" returns you to the main view.';
+    var panel = document.getElementById('config-panel');
+    panel.parentNode.insertBefore(bar, panel);
+  }
 
   var FIELD_MAPPING_KEYS = [
     { id: 'fld-tenant-name',               key: 'tenantNameField' },
@@ -56,7 +138,7 @@
   ];
 
   window.addEventListener('load', function () {
-    tableau.extensions.initializeDialogAsync().then(function () {
+    function init() {
       dashWs = tableau.extensions.dashboardContent.dashboard.worksheets;
 
       populateWorksheetDropdowns();
@@ -66,7 +148,19 @@
       applySavedSettings(saved);
 
       document.getElementById('btn-save').addEventListener('click', saveAndClose);
-    });
+      document.getElementById('btn-add-filter').addEventListener('click', addFilter);
+
+      var $mockToggle = document.getElementById('toggle-mock-mode');
+      var $mockRow    = document.getElementById('mock-mode-row');
+      $mockToggle.addEventListener('change', function () {
+        $mockRow.classList.toggle('active', $mockToggle.checked);
+      });
+    }
+
+    var initPromise;
+    try { initPromise = tableau.extensions.initializeDialogAsync(); }
+    catch (e) { initPromise = Promise.reject(e); }
+    initPromise.catch(function () { injectBrowserStub(); }).then(init);
   });
 
   function loadSettings() {
@@ -106,6 +200,7 @@
     ws.getSummaryDataAsync({ maxRows: 1 }).then(function (dt) {
       sourceCols = dt.columns.map(function (c) { return c.fieldName; });
       fillFieldSelects('fld-', sourceCols);
+      renderFilterList();
     });
   }
 
@@ -148,6 +243,13 @@
 
     var kt = s.kpiTooltips || {};
     KPI_TOOLTIP_KEYS.forEach(function (item) { setVal(item.id, kt[item.key] || ''); });
+
+    filterConfigs = (Array.isArray(s.filterConfigs) ? s.filterConfigs : []);
+    renderFilterList();
+
+    var mockOn = s.mockMode === true || s.mockMode === 'true';
+    setCheck('toggle-mock-mode', mockOn);
+    document.getElementById('mock-mode-row').classList.toggle('active', mockOn);
   }
 
   function saveAndClose() {
@@ -178,9 +280,97 @@
     KPI_TOOLTIP_KEYS.forEach(function (item) { kt[item.key] = getVal(item.id).trim(); });
     tableau.extensions.settings.set('kpiTooltips', JSON.stringify(kt));
 
+    tableau.extensions.settings.set('filterConfigs', JSON.stringify(filterConfigs));
+    tableau.extensions.settings.set('mockMode', getCheck('toggle-mock-mode') ? 'true' : 'false');
+
     tableau.extensions.settings.saveAsync()
       .then(function ()  { tableau.extensions.ui.closeDialog('saved'); })
       .catch(function () { tableau.extensions.ui.closeDialog('saved'); });
+  }
+
+  function renderFilterList() {
+    var $list = document.getElementById('filter-list');
+    if (!$list) return;
+    $list.innerHTML = '';
+
+    filterConfigs.forEach(function (cfg, i) {
+      var row = document.createElement('div');
+      row.className = 'filter-item';
+
+      // Column select
+      var $sel = document.createElement('select');
+      $sel.className = 'fi-field';
+      var blankOpt = document.createElement('option');
+      blankOpt.value = ''; blankOpt.textContent = '— select column —';
+      $sel.appendChild(blankOpt);
+      sourceCols.forEach(function (col) {
+        var o = document.createElement('option'); o.value = o.textContent = col; $sel.appendChild(o);
+      });
+      if (cfg.field && sourceCols.indexOf(cfg.field) === -1 && cfg.field !== '') {
+        var o = document.createElement('option'); o.value = o.textContent = cfg.field; $sel.appendChild(o);
+      }
+      $sel.value = cfg.field || '';
+      $sel.addEventListener('change', function () {
+        var prevField = filterConfigs[i].field;
+        filterConfigs[i].field = $sel.value;
+        if (!filterConfigs[i].label || filterConfigs[i].label === prevField) {
+          filterConfigs[i].label = $sel.value;
+          $inp.value = $sel.value;
+        }
+      });
+
+      // Label input
+      var $inp = document.createElement('input');
+      $inp.type = 'text';
+      $inp.className = 'fi-label';
+      $inp.placeholder = 'Label';
+      $inp.value = cfg.label || '';
+      $inp.addEventListener('input', function () { filterConfigs[i].label = $inp.value; });
+
+      // Searchable checkbox
+      var $wrap = document.createElement('label');
+      $wrap.className = 'fi-searchable-wrap';
+      var $chk = document.createElement('input');
+      $chk.type = 'checkbox';
+      $chk.className = 'fi-searchable';
+      $chk.checked = !!cfg.searchable;
+      $chk.addEventListener('change', function () { filterConfigs[i].searchable = $chk.checked; });
+      $wrap.appendChild($chk);
+      $wrap.appendChild(document.createTextNode(' Searchable'));
+
+      // Delete button
+      var $del = document.createElement('button');
+      $del.type = 'button';
+      $del.className = 'del-btn';
+      $del.textContent = '✕';
+      $del.title = 'Remove filter';
+      $del.addEventListener('click', function () {
+        filterConfigs.splice(i, 1);
+        renderFilterList();
+      });
+
+      row.appendChild($sel);
+      row.appendChild($inp);
+      row.appendChild($wrap);
+      row.appendChild($del);
+      $list.appendChild(row);
+    });
+
+    if (!filterConfigs.length) {
+      var empty = document.createElement('p');
+      empty.style.cssText = 'font-size:12px;color:var(--text-muted);padding:8px 0;';
+      empty.textContent = 'No filters configured. Click "+ Add Filter" to add one.';
+      $list.appendChild(empty);
+    }
+  }
+
+  function addFilter() {
+    if (!sourceCols.length) {
+      alert('Select a source worksheet on the Data tab first, then add filters.');
+      return;
+    }
+    filterConfigs.push({ field: sourceCols[0], label: sourceCols[0], searchable: false });
+    renderFilterList();
   }
 
   function cssEscape(v) { return String(v).replace(/"/g, '\\"'); }
